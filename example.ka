@@ -1,0 +1,54 @@
+type Bit;
+type TwosComp[n] = BitVector[n];
+
+abstract mod Adder<T, C>(a: T, b: T, cin?: C) -> (T, C)
+
+mod RcaTwosComp[n]: Adder<TwosComp[n], Bit>(a, b, cin) -> (TwosComp[n], Bit) {
+  ?cin => 1'b0;
+  
+  fn stage(a: TwosComp[1], b: TwosComp[1], cin: Bit) => (a ^ b ^ cin, a * b + (a ^ b * cin));
+
+  ...s, cin <== stage(a[i], b[i], cin) for i in 0...n
+}
+
+trait From<T> {
+  fn from(val: T) -> Self;
+}
+
+trait To<T> {
+  fn to(val: Self) -> Self;
+}
+
+trait As<T> {
+  fn as(val: Self) -> T
+}
+
+trait Vec<T> {
+  fn len() -> size;
+  fn index(i: size) -> T
+}
+
+impl<T> Iter<T> for dyn Vec<T> {
+  fn iter(self) -> fn() -> ?T  {
+    let i = 0;
+    () => i < self.len() ? self[i++] : None
+  }
+}
+
+trait Iter<T> {
+  fn iter(self) -> fn() -> T
+}
+
+trait Append<T>: Vec<T> {
+  fn append(self[n], next: dyn As<T>) -> Self[n+1];
+}
+
+impl<T> Concat<T> for dyn Append<T> {
+  fn concat?(self[n], ...other[k]: Self[n]) -> {
+    ...self <== self.append(other[i]) for i in 0...n;
+  }
+}
+
+trait Concat<T>: Append<T> {
+  fn concat(self[n], other[k]: dyn As<Self>) -> Self[n + k];
+}
